@@ -10,6 +10,207 @@
             padding: 0;
             box-sizing: border-box;
         }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 50px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            max-width: 500px;
+            width: 90%;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 40px;
+            font-size: 14px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 15px 40px;
+            font-size: 18px;
+            font-weight: bold;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .btn-on {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        .btn-on:hover {
+            background-color: #45a049;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(76, 175, 80, 0.3);
+        }
+
+        .btn-on:active {
+            transform: translateY(0);
+        }
+
+        .btn-off {
+            background-color: #f44336;
+            color: white;
+        }
+
+        .btn-off:hover {
+            background-color: #da190b;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(244, 67, 54, 0.3);
+        }
+
+        .btn-off:active {
+            transform: translateY(0);
+        }
+
+        #status {
+            margin-top: 30px;
+            padding: 15px;
+            border-radius: 10px;
+            font-weight: bold;
+            font-size: 16px;
+            min-height: 25px;
+        }
+
+        .status-loading {
+            color: #ff9800;
+            background-color: #fff3e0;
+        }
+
+        .status-success {
+            color: #4CAF50;
+            background-color: #e8f5e9;
+        }
+
+        .status-error {
+            color: #f44336;
+            background-color: #ffebee;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🤖 Control ChatBot</h1>
+        <p class="subtitle">WhatsApp Bot Manager</p>
+
+        <div class="button-group">
+            <button class="btn-on" onclick="encender()">
+                ✅ ENCENDER
+            </button>
+            <button class="btn-off" onclick="apagar()">
+                ❌ APAGAR
+            </button>
+        </div>
+
+        <p id="status"></p>
+    </div>
+
+    <script>
+        // En GitHub Pages el archivo debe llamarse "index.html" (minúsculas).
+        // Nota: Para que esto funcione desde el navegador, tu endpoint debe permitir CORS.
+
+        // Por defecto se usa /webhook/ (producción). /webhook-test/ suele fallar si n8n no está en modo test.
+        const WEBHOOK_URL = 'https://n8n-n8n.ua4qkv.easypanel.host/webhook/control-chatbot';
+
+        function mostrarEstado(mensaje, tipo) {
+            const statusEl = document.getElementById('status');
+            statusEl.textContent = mensaje;
+            statusEl.className = `status-${tipo}`;
+        }
+
+        async function llamarWebhook(action) {
+            const url = new URL(WEBHOOK_URL);
+            url.searchParams.set('action', action);
+
+            let res;
+            try {
+                res = await fetch(url.toString(), {
+                    method: 'GET',
+                    mode: 'cors',
+                    headers: {
+                        'Accept': 'application/json, text/plain;q=0.9, */*;q=0.8'
+                    }
+                });
+            } catch (e) {
+                throw new Error('No se pudo conectar al webhook (CORS/Red).');
+            }
+
+            const bodyText = await res.text();
+            if (!res.ok) {
+                const suffix = bodyText ? ` Respuesta: ${bodyText}` : '';
+                throw new Error(`HTTP ${res.status}.${suffix}`);
+            }
+
+            // n8n a veces responde texto; intentamos JSON pero no lo exigimos.
+            try {
+                return bodyText ? JSON.parse(bodyText) : null;
+            } catch {
+                return bodyText || null;
+            }
+        }
+
+        async function encender() {
+            mostrarEstado('⏳ Encendiendo...', 'loading');
+            try {
+                await llamarWebhook('on');
+                mostrarEstado('✅ ChatBot ENCENDIDO', 'success');
+            } catch (e) {
+                mostrarEstado(`❌ Error al encender: ${e?.message || e}`, 'error');
+            }
+        }
+
+        async function apagar() {
+            mostrarEstado('⏳ Apagando...', 'loading');
+            try {
+                await llamarWebhook('off');
+                mostrarEstado('✅ ChatBot APAGADO', 'success');
+            } catch (e) {
+                mostrarEstado(`❌ Error al apagar: ${e?.message || e}`, 'error');
+            }
+        }
+    </script>
+</body>
+</html>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Control ChatBot WhatsApp</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
         
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
